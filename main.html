@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mensiv Maudy</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff0f6;
+      color: #d63384;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      text-align: center;
+      overflow-x: hidden;
+    }
+    .music-player {
+      margin-top: 20px;
+      position: relative;
+    }
+    #playButton {
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .photo-container {
+      width: 90%;
+      max-width: 300px;
+      margin-top: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .photo-container img {
+      width: 100%;
+      display: block;
+    }
+    .message {
+      font-size: 0.95em;
+      padding: 15px;
+      white-space: pre-line;
+    }
+    .counter {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 1em;
+    }
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="music-player">
+    <button id="playButton">Putar Musik 🎵</button>
+    <audio id="bgMusic" loop>
+      <source src="audio/bersamamu.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+  <div class="photo-container">
+    <img src="images/photo1.jpg" alt="Foto kenangan" id="slideshow-image"/>
+  </div>
+
+  <div class="counter" id="counter">Loading...</div>
+
+  <div class="message">
+    Happy Mensiv ke 2 tahun 7 bulan ya sayaang! 💖
+    Terimakasih sudah menjadi penyemangat hari hariku selama dua tahun terakhir ini ya,
+    selalu jadi maudiaku dan bocilku selamanya ya sayang,
+    semoga kita berdua sama sam terus dan sehat terus yaaa supaya kita bisa mencapai tujuan kita berduaa aamiin,
+
+    I lovee youu my little girl!
+    Aku sayang kamu selamanyaaa 💕
+  </div>
+
+  <script>
+    const start = new Date("2022-10-10T13:00:00Z"); // UTC+0 = 20:00 WIB
+    function updateCounter() {
+      const now = new Date();
+      const diff = now - start;
+      const seconds = Math.floor(diff / 1000);
+      const days = Math.floor(seconds / (3600 * 24));
+      const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      document.getElementById("counter").innerText =
+        `${days} hari, ${hours} jam, ${minutes} menit, ${secs} detik bersama 💞`;
+    }
+    setInterval(updateCounter, 1000);
+    updateCounter();
+
+    const photos = ["images/photo1.jpg", "images/photo2.jpg", "images/photo3.jpg"];
+    let index = 0;
+    setInterval(() => {
+      index = (index + 1) % photos.length;
+      document.getElementById("slideshow-image").src = photos[index];
+    }, 3000);
+
+    // Musik manual
+    const bgMusic = document.getElementById("bgMusic");
+    const playButton = document.getElementById("playButton");
+    playButton.addEventListener("click", () => {
+      bgMusic.play();
+      playButton.style.display = "none";
+    });
+  </script>
+</body>
+</html>
