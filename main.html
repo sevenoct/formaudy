@@ -19,12 +19,14 @@
       text-align: center;
       overflow-x: hidden;
     }
+
     .music-player {
       margin-top: 20px;
       font-size: 14px;
       color: #555;
       font-style: italic;
     }
+
     .photo-container {
       width: 90%;
       max-width: 300px;
@@ -33,22 +35,80 @@
       overflow: hidden;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+
     .photo-container img {
       width: 100%;
       display: block;
     }
+
     .message {
       font-size: 0.95em;
       padding: 15px;
       white-space: pre-line;
     }
+
     .counter {
       margin-top: 10px;
       font-weight: bold;
       font-size: 1em;
     }
+
     audio {
       display: none;
+    }
+
+    .odi-container {
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .odi-container img {
+      width: 200px;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff0f6;
+      color: #d63384;
+      border: 2px solid #d63384;
+      padding: 20px;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    .popup p {
+      margin: 0 0 10px;
+    }
+
+    .popup button {
+      background: #d63384;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .popup button:hover {
+      background: #c2185b;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      z-index: 5;
     }
   </style>
 </head>
@@ -59,6 +119,20 @@
       <source src="audio/bersamamu.mp3" type="audio/mpeg" />
       Your browser does not support the audio element.
     </audio>
+  </div>
+
+  <div class="odi-container" onclick="openPopup()">
+    <img src="images/odi.png" alt="Odi si beruang imut" />
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closePopup()"></div>
+  <div class="popup" id="popup">
+    <p>maaf ya sayang aku masih belum bisa jadi yang sempurna<br>
+    belum jadi yang terbaik di hatimu,<br>
+    tapi inget terus yaa aku selalu berusaha<br>
+    jadi Hasan yang kamu mau 💖</p>
+    <p style="margin-top: 8px;">— Hasan, Juni 2025</p>
+    <button onclick="closePopup()">Tutup</button>
   </div>
 
   <div class="photo-container">
@@ -92,27 +166,15 @@
       let minutes = end.getMinutes() - start.getMinutes();
       let seconds = end.getSeconds() - start.getSeconds();
 
-      if (seconds < 0) {
-        seconds += 60;
-        minutes--;
-      }
-      if (minutes < 0) {
-        minutes += 60;
-        hours--;
-      }
-      if (hours < 0) {
-        hours += 24;
-        days--;
-      }
+      if (seconds < 0) { seconds += 60; minutes--; }
+      if (minutes < 0) { minutes += 60; hours--; }
+      if (hours < 0) { hours += 24; days--; }
       if (days < 0) {
         const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
         days += prevMonth.getDate();
         months--;
       }
-      if (months < 0) {
-        months += 12;
-        years--;
-      }
+      if (months < 0) { months += 12; years--; }
 
       return { years, months, days, hours, minutes, seconds };
     }
@@ -121,7 +183,6 @@
       const now = getJakartaTimeNow();
       const diffInMs = now - startDate;
       const totalDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
       const { years, months, days, hours, minutes, seconds } = getDurationComponents(startDate, now);
 
       document.getElementById("counter").innerText =
@@ -139,6 +200,16 @@
       index = (index + 1) % photos.length;
       document.getElementById("slideshow-image").src = photos[index];
     }, 3000);
+
+    function openPopup() {
+      document.getElementById("popup").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    }
   </script>
 </body>
 </html>
