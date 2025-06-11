@@ -9,7 +9,9 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #fff0f6;
+      background: linear-gradient(120deg, #fff0f6, #ffe0ec, #ffc0da);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
       color: #d63384;
       display: flex;
       flex-direction: column;
@@ -19,12 +21,23 @@
       text-align: center;
       overflow-x: hidden;
     }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     .music-player {
       margin-top: 20px;
-      font-size: 14px;
-      color: #555;
-      font-style: italic;
     }
+
+    .music-credit {
+      font-size: 0.9em;
+      margin-top: 10px;
+      color: #ff69b4;
+    }
+
     .photo-container {
       width: 90%;
       max-width: 300px;
@@ -33,20 +46,39 @@
       overflow: hidden;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+
     .photo-container img {
       width: 100%;
       display: block;
+      transition: opacity 0.5s ease-in-out;
     }
+
     .message {
       font-size: 0.95em;
       padding: 15px;
       white-space: pre-line;
     }
+
     .counter {
       margin-top: 10px;
       font-weight: bold;
       font-size: 1em;
     }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    #visualizer {
+      width: 100%;
+      height: 60px;
+      margin-top: 10px;
+    }
+
     audio {
       display: none;
     }
@@ -54,11 +86,12 @@
 </head>
 <body>
   <div class="music-player">
-    Music by Vierra - Bersamamu
     <audio id="bgMusic" autoplay loop>
       <source src="audio/bersamamu.mp3" type="audio/mpeg" />
-      Your browser does not support the audio element.
+      Browser tidak mendukung audio.
     </audio>
+    <canvas id="visualizer"></canvas>
+    <div class="music-credit">🎵 Music by Vierra – Bersamamu</div>
   </div>
 
   <div class="photo-container">
@@ -77,68 +110,132 @@
     Aku sayang kamu selamanyaaa 💕
   </div>
 
+  <canvas id="effectCanvas"></canvas>
+
   <script>
-    const startDate = new Date("2022-10-10T20:00:00+07:00");
-
-    function getJakartaTimeNow() {
-      return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-    }
-
-    function getDurationComponents(start, end) {
-      let years = end.getFullYear() - start.getFullYear();
-      let months = end.getMonth() - start.getMonth();
-      let days = end.getDate() - start.getDate();
-      let hours = end.getHours() - start.getHours();
-      let minutes = end.getMinutes() - start.getMinutes();
-      let seconds = end.getSeconds() - start.getSeconds();
-
-      if (seconds < 0) {
-        seconds += 60;
-        minutes--;
-      }
-      if (minutes < 0) {
-        minutes += 60;
-        hours--;
-      }
-      if (hours < 0) {
-        hours += 24;
-        days--;
-      }
-      if (days < 0) {
-        const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
-        days += prevMonth.getDate();
-        months--;
-      }
-      if (months < 0) {
-        months += 12;
-        years--;
-      }
-
-      return { years, months, days, hours, minutes, seconds };
-    }
-
+    // Counter waktu
+    const start = new Date("2022-10-10T13:00:00+07:00"); // Waktu Jakarta
     function updateCounter() {
-      const now = getJakartaTimeNow();
-      const diffInMs = now - startDate;
-      const totalDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-      const { years, months, days, hours, minutes, seconds } = getDurationComponents(startDate, now);
-
+      const now = new Date();
+      const diff = now - start;
+      const seconds = Math.floor(diff / 1000);
+      const days = Math.floor(seconds / (3600 * 24));
+      const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
       document.getElementById("counter").innerText =
-        `${years} tahun, ${months} bulan, ${days} hari, ` +
-        `${hours} jam, ${minutes} menit, ${seconds} detik bersama 💞\n` +
-        `Total: ${totalDays} hari`;
+        `${days} hari, ${hours} jam, ${minutes} menit, ${secs} detik bersama 💞`;
     }
-
     setInterval(updateCounter, 1000);
     updateCounter();
 
+    // Slideshow dengan transisi halus
     const photos = ["images/photo1.jpg", "images/photo2.jpg", "images/photo3.jpg"];
     let index = 0;
     setInterval(() => {
-      index = (index + 1) % photos.length;
-      document.getElementById("slideshow-image").src = photos[index];
+      const img = document.getElementById("slideshow-image");
+      img.style.opacity = 0;
+      setTimeout(() => {
+        index = (index + 1) % photos.length;
+        img.src = photos[index];
+        img.style.opacity = 1;
+      }, 500);
     }, 3000);
+
+    // Musik visualizer
+    const canvas = document.getElementById("visualizer");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = 60;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audio = document.getElementById("bgMusic");
+    const source = audioCtx.createMediaElementSource(audio);
+    const analyser = audioCtx.createAnalyser();
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 64;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    function drawVisualizer() {
+      requestAnimationFrame(drawVisualizer);
+      analyser.getByteFrequencyData(dataArray);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const barWidth = canvas.width / bufferLength;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = dataArray[i] / 2;
+        ctx.fillStyle = "#ff69b4";
+        ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+        x += barWidth;
+      }
+    }
+    audio.play().then(() => {
+      drawVisualizer();
+    }).catch(() => {
+      // Autoplay tidak diizinkan
+      document.addEventListener('click', () => {
+        audio.play();
+        drawVisualizer();
+      }, { once: true });
+    });
+
+    // Animasi love / bunga jatuh
+    const effectCanvas = document.getElementById("effectCanvas");
+    const ectx = effectCanvas.getContext("2d");
+    let hearts = [];
+
+    function resizeEffectCanvas() {
+      effectCanvas.width = window.innerWidth;
+      effectCanvas.height = window.innerHeight;
+    }
+    resizeEffectCanvas();
+    window.addEventListener("resize", resizeEffectCanvas);
+
+    function drawHeart(x, y, size) {
+      ectx.beginPath();
+      ectx.moveTo(x, y);
+      ectx.bezierCurveTo(x, y - size / 2, x - size, y - size / 2, x - size, y);
+      ectx.bezierCurveTo(x - size, y + size / 1.5, x, y + size, x, y + size * 1.5);
+      ectx.bezierCurveTo(x, y + size, x + size, y + size / 1.5, x + size, y);
+      ectx.bezierCurveTo(x + size, y - size / 2, x, y - size / 2, x, y);
+      ectx.fillStyle = Math.random() > 0.5 ? "#ff69b4" : "#ffb6c1";
+      ectx.fill();
+    }
+
+    function createHeart() {
+      hearts.push({
+        x: Math.random() * effectCanvas.width,
+        y: -10,
+        size: Math.random() * 10 + 5,
+        speed: Math.random() * 1.5 + 0.5,
+      });
+    }
+    setInterval(createHeart, 300);
+
+    function animateHearts() {
+      ectx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+      hearts.forEach((heart, i) => {
+        heart.y += heart.speed;
+        drawHeart(heart.x, heart.y, heart.size);
+        if (heart.y > effectCanvas.height) hearts.splice(i, 1);
+      });
+      requestAnimationFrame(animateHearts);
+    }
+    animateHearts();
+
+    // Popup pesan cinta random
+    const loveMessages = [
+      "Kamu itu paling lucu deh 🥰",
+      "Hari-hariku selalu cerah karena kamu 🌞",
+      "Jangan lupa makan yaa 😘",
+      "Kamu semangatku tiap hari 💖",
+      "Maudy paling gemesin di duniaaa 😍"
+    ];
+    setInterval(() => {
+      const msg = loveMessages[Math.floor(Math.random() * loveMessages.length)];
+      alert(msg);
+    }, 60000); // tiap 60 detik
   </script>
 </body>
 </html>
